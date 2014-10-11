@@ -34,6 +34,7 @@ import android.view.animation.ScaleAnimation;
 import android.view.animation.Animation.AnimationListener;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.RelativeLayout.LayoutParams;
 
 /**
  * A custom view that looks like the menu in <a href="https://path.com">Path
@@ -76,10 +77,60 @@ public class ArcMenu extends RelativeLayout {
     	setChildSize(childSize);
     }
     
+    int mX, mY, mBaseWidth, mBaseHeight;
+    int mChildSize, mChildCount;
+    public ArcMenu(Context context, int menuMode, int x, int y, int baseWidth, int baseHeight, int childSize, int childCount) {
+    	super(context);
+    	c = context;
+    	mX = x;
+    	mY = y;
+    	mBaseWidth = baseWidth;
+    	mBaseHeight = baseHeight;
+    	mChildSize = childSize;
+    	mChildCount = childCount;
+    	mMenuMode = menuMode;
+    	init(context);
+    	setChildSize(childSize);
+    }
+    
+    LayoutParams params;
+    private void applyLayoutParams(int menuMode) {
+    	params = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+    	int padding;
+    	switch (menuMode) {
+		case FAN:
+			padding = (mArcLayout.getChildPadding() + mArcLayout.getLayoutPadding()) * (mChildCount+1);
+    		params.leftMargin = mX - ((mChildSize*mChildCount)/2) - padding;
+    		Log.d("", "mx"+mX+" size*count"+((mChildSize*mChildCount)/2)+" padding"+padding+" margin"+params.leftMargin);
+    		Log.d(mChildSize+"."+mChildCount,"test"+(mChildSize*mChildCount)+" measure"+mArcLayout.getMeasuredWidth()+"/"+mArcLayout.getMeasuredHeight());
+    		params.topMargin = mY - ((mChildSize*mChildCount)/2)/* - (controlLayout.getMeasuredHeight())*/;
+    		setArcMode(menuMode);
+    		mArcLayout.setLayoutParams(params);
+			break;
+
+		default:
+			break;
+		}
+    }
+    
     public void setArcMode(int menuMode) {
     	switch(menuMode) {
     	case FAN:
     		mArcLayout.setArc(270.0f, 360.0f);
+    		Log.d("params","r:"+params.rightMargin+" l:"+params.leftMargin+" t:"+params.topMargin+"b:"+params.bottomMargin);
+    		if(params.rightMargin>0 || params.leftMargin<=0) {
+    			//kanan
+    			if(params.topMargin>=0)
+    				mArcLayout.setArc(270.0f, 360.0f);
+    			else 
+    				mArcLayout.setArc(0.0f, 90.0f);
+    		} else {
+    			//kiri
+    			if(params.topMargin>=0)
+    				mArcLayout.setArc(180.0f, 270.0f);
+    			else 
+    				mArcLayout.setArc(90.0f, 180.0f);
+    		}
     		break;
     	case RAINBOW:
     		mArcLayout.setArc(210.0f, 330.0f);
@@ -103,6 +154,8 @@ public class ArcMenu extends RelativeLayout {
         li.inflate(R.layout.arc_menu, this);
 
         mArcLayout = (ArcLayout) findViewById(R.id.item_layout);
+        applyLayoutParams(mMenuMode);
+        mArcLayout.setPosition(mBaseWidth, mBaseHeight, mX, mY, params);
 
         final ViewGroup controlLayout = (ViewGroup) findViewById(R.id.control_layout);
         controlLayout.setClickable(false);

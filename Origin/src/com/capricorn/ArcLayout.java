@@ -16,10 +16,13 @@
 
 package com.capricorn;
 
+import java.util.ArrayList;
+
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
@@ -31,6 +34,7 @@ import android.view.animation.LinearInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.view.animation.RotateAnimation;
 import android.view.animation.Animation.AnimationListener;
+import android.widget.RelativeLayout;
 
 /**
  * A Layout that arranges its children around its center. The arc can be set by
@@ -82,6 +86,26 @@ public class ArcLayout extends ViewGroup {
             a.recycle();
         }
     }
+    
+    /* fas */
+    public int getChildPadding() {
+    	return mChildPadding;
+    }
+    
+    public int getLayoutPadding() {
+    	return mLayoutPadding;
+    }
+    
+    int mBaseWidth, mBaseHeight, mX, mY;
+    RelativeLayout.LayoutParams mParams;
+    public void setPosition(int baseWidth, int baseHeight, int x, int y, RelativeLayout.LayoutParams params) {
+    	mBaseWidth = baseWidth;
+    	mBaseHeight = baseHeight;
+    	mX = x;
+    	mY = y;
+    	mParams = params;
+    }
+    /* eof */
 
     private static int computeRadius(final float arcDegrees, final int childCount, final int childSize,
             final int childPadding, final int minRadius) {
@@ -115,6 +139,7 @@ public class ArcLayout extends ViewGroup {
         final int size = radius * 2 + mChildSize + mChildPadding + mLayoutPadding * 2;
 
         setMeasuredDimension(size, size);
+        Log.d("on measure","size:"+size);
 
         final int count = getChildCount();
         for (int i = 0; i < count; i++) {
@@ -125,19 +150,36 @@ public class ArcLayout extends ViewGroup {
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        final int centerX = getWidth() / 2;
-        final int centerY = getHeight() / 2;
+    	measure(0, 0);
+    	Log.d("on layout","measure:"+getMeasuredWidth());
+        final int centerX = getMeasuredWidth() / 2;
+        final int centerY = getMeasuredHeight() / 2;
         final int radius = mExpanded ? mRadius : 0;
 
         final int childCount = getChildCount();
         final float perDegrees = (mToDegrees - mFromDegrees) / (childCount - 1);
 
         float degrees = mFromDegrees;
+        /**/
+        ArrayList<Rect> rects = new ArrayList<Rect>();
+        int mostLeft, mostRight, mostTop, mostBottom;
+        mostLeft = mostRight = mostTop = mostBottom = 0;
         for (int i = 0; i < childCount; i++) {
             Rect frame = computeChildFrame(centerX, centerY, radius, degrees, mChildSize);
+            rects.add(frame);
             degrees += perDegrees;
-            getChildAt(i).layout(frame.left, frame.top, frame.right, frame.bottom);
+            mostLeft = (mostLeft==0 || frame.left<mostLeft) ? frame.left : mostLeft;
+            mostTop = (mostTop==0 || frame.top<mostTop) ? frame.top : mostTop;
+            mostRight = (mostRight==0 || frame.right>mostRight) ? frame.right : mostRight;
+            mostBottom = (mostBottom==0 || frame.bottom>mostBottom) ? frame.bottom : mostBottom;
         }
+        int pengurang = (mParams.topMargin+mostBottom >= mBaseHeight) ? (mParams.topMargin+mostBottom) - mBaseHeight : 0;
+        Log.d("on layout","pengurang:"+pengurang+" "+mParams.topMargin+"/"+mostBottom+"/"+mBaseHeight);
+        for(int i=0; i<childCount; i++) {
+        	getChildAt(i).layout(rects.get(i).left, rects.get(i).top-pengurang, rects.get(i).right, rects.get(i).bottom-pengurang);
+            Log.d("on layout","frame l:"+rects.get(i).left+" t:"+rects.get(i).top+" r:"+rects.get(i).right+" b:"+rects.get(i).bottom);
+        }
+        /**/
     }
 
     /**
