@@ -16,8 +16,6 @@
 
 package com.capricorn;
 
-import java.util.ArrayList;
-
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Rect;
@@ -26,7 +24,6 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
-import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
 import android.view.animation.Interpolator;
@@ -36,19 +33,7 @@ import android.view.animation.RotateAnimation;
 import android.view.animation.Animation.AnimationListener;
 import android.widget.RelativeLayout;
 
-/**
- * A Layout that arranges its children around its center. The arc can be set by
- * calling {@link #setArc(float, float) setArc()}. You can override the method
- * {@link #onMeasure(int, int) onMeasure()}, otherwise it is always
- * WRAP_CONTENT.
- * 
- * @author Capricorn
- * 
- */
 public class ArcLayout extends ViewGroup {
-    /**
-     * children will be set the same size.
-     */
     private int mChildSize;
 
     private int mChildPadding = 5;
@@ -160,31 +145,14 @@ public class ArcLayout extends ViewGroup {
         final float perDegrees = (mToDegrees - mFromDegrees) / (childCount - 1);
 
         float degrees = mFromDegrees;
-        /**/
-        ArrayList<Rect> rects = new ArrayList<Rect>();
-        int mostLeft, mostRight, mostTop, mostBottom;
-        mostLeft = mostRight = mostTop = mostBottom = 0;
         for (int i = 0; i < childCount; i++) {
             Rect frame = computeChildFrame(centerX, centerY, radius, degrees, mChildSize);
-            rects.add(frame);
             degrees += perDegrees;
-            mostLeft = (mostLeft==0 || frame.left<mostLeft) ? frame.left : mostLeft;
-            mostTop = (mostTop==0 || frame.top<mostTop) ? frame.top : mostTop;
-            mostRight = (mostRight==0 || frame.right>mostRight) ? frame.right : mostRight;
-            mostBottom = (mostBottom==0 || frame.bottom>mostBottom) ? frame.bottom : mostBottom;
+            getChildAt(i).layout(frame.left, frame.top, frame.right, frame.bottom);
         }
-        int pengurang = (mParams.topMargin+mostBottom >= mBaseHeight) ? (mParams.topMargin+mostBottom) - mBaseHeight : 0;
-        Log.d("on layout","pengurang:"+pengurang+" "+mParams.topMargin+"/"+mostBottom+"/"+mBaseHeight);
-        for(int i=0; i<childCount; i++) {
-        	getChildAt(i).layout(rects.get(i).left, rects.get(i).top-pengurang, rects.get(i).right, rects.get(i).bottom-pengurang);
-            Log.d("on layout","frame l:"+rects.get(i).left+" t:"+rects.get(i).top+" r:"+rects.get(i).right+" b:"+rects.get(i).bottom);
-        }
-        /**/
+
     }
 
-    /**
-     * refers to {@link LayoutAnimationController#getDelayForView(View view)}
-     */
     private static long computeStartOffset(final int childCount, final boolean expanded, final int index,
             final float delayPercent, final long duration, Interpolator interpolator) {
         final float delay = delayPercent * duration;

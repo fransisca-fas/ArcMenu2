@@ -18,11 +18,10 @@ package com.capricorn;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
@@ -34,16 +33,11 @@ import android.view.animation.ScaleAnimation;
 import android.view.animation.Animation.AnimationListener;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
-import android.widget.RelativeLayout.LayoutParams;
 
-/**
- * A custom view that looks like the menu in <a href="https://path.com">Path
- * 2.0</a> (for iOS).
- * 
- * @author Capricorn
- * 
- */
 public class ArcMenu extends RelativeLayout {
+	
+	private String TAG = ArcMenu.class.getSimpleName();
+	
     private ArcLayout mArcLayout;
 
     private ImageView mHintView;
@@ -90,6 +84,7 @@ public class ArcMenu extends RelativeLayout {
     	mChildCount = childCount;
     	mMenuMode = menuMode;
     	init(context);
+    	setArcMode(menuMode);
     	setChildSize(childSize);
     }
     
@@ -97,27 +92,40 @@ public class ArcMenu extends RelativeLayout {
     private void applyLayoutParams(int menuMode) {
     	params = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
     	int padding;
+    	Log.d(TAG, "menuMode = " + menuMode); 
     	switch (menuMode) {
 		case FAN:
 			padding = (mArcLayout.getChildPadding() + mArcLayout.getLayoutPadding()) * (mChildCount+1);
-    		params.leftMargin = mX - ((mChildSize*mChildCount)/2) - padding;
-    		Log.d("", "mx"+mX+" size*count"+((mChildSize*mChildCount)/2)+" padding"+padding+" margin"+params.leftMargin);
-    		Log.d(mChildSize+"."+mChildCount,"test"+(mChildSize*mChildCount)+" measure"+mArcLayout.getMeasuredWidth()+"/"+mArcLayout.getMeasuredHeight());
+    		params.leftMargin = mX - ((mChildSize*mChildCount)/2) - dpToPx(padding);
+    		Log.d(TAG, "mx"+mX+" size*count"+((mChildSize*mChildCount)/2)+" padding"+padding+" margin"+params.leftMargin);
+    		Log.d(TAG,"test"+(mChildSize*mChildCount)+" measure"+mArcLayout.getMeasuredWidth()+"/"+mArcLayout.getMeasuredHeight());
     		params.topMargin = mY - ((mChildSize*mChildCount)/2)/* - (controlLayout.getMeasuredHeight())*/;
     		setArcMode(menuMode);
     		mArcLayout.setLayoutParams(params);
 			break;
-
+		case RAINBOW:
+			padding = (mArcLayout.getChildPadding() * (mChildCount+1)) + (mArcLayout.getLayoutPadding() * 2);
+    		params.leftMargin = mX - ((mChildSize*mChildCount)/2) - dpToPx(padding);
+    		Log.d(TAG, "mx"+mX+" size*count"+((mChildSize*mChildCount)/2)+" padding"+dpToPx(padding)+" margin"+params.leftMargin);
+    		Log.d(TAG,"test"+(mChildSize*mChildCount)+" measure"+mArcLayout.getMeasuredWidth()+"/"+mArcLayout.getMeasuredHeight());
+    		params.topMargin = mY - ((mChildSize*mChildCount)/2)/* - (controlLayout.getMeasuredHeight())*/;
+    		mArcLayout.setLayoutParams(params);
+			break;
 		default:
 			break;
 		}
     }
     
+    private int dpToPx(int dp)  {
+    	DisplayMetrics displayMetrics = c.getResources().getDisplayMetrics();
+        return (int) ((dp*displayMetrics.density)+0.5);
+	}
+    
     public void setArcMode(int menuMode) {
     	switch(menuMode) {
     	case FAN:
     		mArcLayout.setArc(270.0f, 360.0f);
-    		Log.d("params","r:"+params.rightMargin+" l:"+params.leftMargin+" t:"+params.topMargin+"b:"+params.bottomMargin);
+    		Log.d(TAG,"r:"+params.rightMargin+" l:"+params.leftMargin+" t:"+params.topMargin+"b:"+params.bottomMargin);
     		if(params.rightMargin>0 || params.leftMargin<=0) {
     			//kanan
     			if(params.topMargin>=0)
@@ -133,7 +141,7 @@ public class ArcMenu extends RelativeLayout {
     		}
     		break;
     	case RAINBOW:
-    		mArcLayout.setArc(210.0f, 330.0f);
+    		mArcLayout.setArc(225.0f, 315.0f);
     		break;
     	case UPWARD:
     		break;
@@ -257,6 +265,7 @@ public class ArcMenu extends RelativeLayout {
         for (int i = 0; i < itemCount; i++) {
             View item = mArcLayout.getChildAt(i);
             item.clearAnimation();
+            item.setVisibility(View.GONE);
         }
 
         mArcLayout.switchState(false);
